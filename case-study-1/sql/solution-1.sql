@@ -134,5 +134,34 @@ where dense_rank = 1
 order by customer_id
 
 -- 8. What is the total items and amount spent for each member before they became a member?
+
+with cte as (select 
+t1.customer_id,
+product_id,
+count(product_id) as total_ordered
+from
+dannys_diner.sales t1
+join
+dannys_diner.members t2
+on t1.customer_id = t2.customer_id
+where t1.order_date < t2.join_date
+group by t1.customer_id, product_id
+order by customer_id)
+
+
+
+select distinct
+customer_id,
+sum(total_ordered) over (partition by customer_id) as total_ordered_per_customer,
+sum(total_ordered * price) over (partition by customer_id) as total_spent
+from cte t1
+join 
+dannys_diner.menu t2
+on 
+t1.product_id = t2.product_id
+group by t1.customer_id, total_ordered, price
+
+
+
 -- 9.  If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
 -- 10. In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
