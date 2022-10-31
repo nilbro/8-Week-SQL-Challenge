@@ -108,6 +108,31 @@ on t1.product_id=t2.product_id
 where rank=1
 
 -- 7. Which item was purchased just before the customer became a member?
+with cte as (select 
+t1.customer_id,
+order_date,
+product_id
+from
+dannys_diner.sales t1
+join
+dannys_diner.members t2
+on t1.customer_id = t2.customer_id
+where t1.order_date < t2.join_date
+)
+
+select 
+customer_id,
+product_name
+from (
+select *,
+dense_rank() over (partition by customer_id order by order_date desc)
+from cte) t1
+join
+dannys_diner.menu t2
+on t1.product_id = t2.product_id
+where dense_rank = 1
+order by customer_id
+
 -- 8. What is the total items and amount spent for each member before they became a member?
 -- 9.  If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
 -- 10. In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
