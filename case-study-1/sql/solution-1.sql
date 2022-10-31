@@ -56,7 +56,57 @@ limit 1
 
 
 -- 5. Which item was the most popular for each customer?
+
+with cte as (select 
+customer_id,
+product_name,
+count(t1.product_id) as order_count
+from  
+dannys_diner.sales t1
+join
+dannys_diner.menu t2
+on t1.product_id = t2.product_id
+group by customer_id, product_name
+order by customer_id)
+
+select 
+customer_id, product_name
+from
+(SELECT 
+    *,
+    RANK() OVER(PARTITION BY customer_id ORDER BY order_count DESC) AS rank
+  FROM cte)t1
+  where rank = 1
+
+
+
 -- 6. Which item was purchased first by the customer after they became a member?
+
+with cte as (select 
+t1.customer_id,
+order_date,
+product_id
+from
+dannys_diner.sales t1
+join
+dannys_diner.members t2
+on t1.customer_id = t2.customer_id
+where t1.order_date > t2.join_date
+order by order_date)
+
+select customer_id,
+product_name
+
+from
+	(
+		select *,
+		rank() over (partition by customer_id order by order_date)
+from cte) t1
+join 
+dannys_diner.menu t2
+on t1.product_id=t2.product_id
+where rank=1
+
 -- 7. Which item was purchased just before the customer became a member?
 -- 8. What is the total items and amount spent for each member before they became a member?
 -- 9.  If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
