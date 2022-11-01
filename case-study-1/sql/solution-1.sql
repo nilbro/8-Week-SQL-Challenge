@@ -224,3 +224,58 @@ on t1.product_id = t2.product_id
 where DATE_PART('month', order_date) = 1)t1
 group by t1.customer_id
   
+## Bonus Questions
+
+-- Join all things
+
+select 
+t1.customer_id,
+order_date,
+product_name,
+price,
+case
+	when join_date <= order_date 
+    then 'Y'
+    else 'N'
+end as member
+from
+dannys_diner.sales as t1
+left join
+dannys_diner.menu as t2
+on t1.product_id = t2.product_id
+left join
+dannys_diner.members as t3
+on
+t1.customer_id = t3.customer_id
+order by customer_id, order_date
+
+-- Ranking
+
+with cte as (select 
+t1.customer_id,
+order_date,
+product_name,
+price,
+case
+	when join_date <= order_date 
+    then 'Y'
+    else 'N'
+end as member
+from
+dannys_diner.sales as t1
+left join
+dannys_diner.menu as t2
+on t1.product_id = t2.product_id
+left join
+dannys_diner.members as t3
+on
+t1.customer_id = t3.customer_id
+order by customer_id, order_date)
+
+select 
+*,
+case 
+	when member = 'N' then NULL
+    else rank() over (partition by customer_id, member order by order_date)
+end as ranking
+from cte
