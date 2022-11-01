@@ -192,3 +192,35 @@ from cte
 group by 1
 
 -- 10. In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
+
+with cte as (
+select 
+t1.customer_id,
+product_id,
+order_date,
+order_date - join_date as member_days
+from dannys_diner.sales t1
+join
+dannys_diner.members t2
+on t1.customer_id = t2.customer_id
+where t1.order_date >= t2.join_date
+)
+
+select 
+customer_id,
+sum(points) as total_points 
+from
+(
+select 
+customer_id,
+case
+	when member_days <= 7 then price * 20
+    else price * 10
+end as points
+from cte t1
+join
+dannys_diner.menu t2
+on t1.product_id = t2.product_id
+where DATE_PART('month', order_date) = 1)t1
+group by t1.customer_id
+  
