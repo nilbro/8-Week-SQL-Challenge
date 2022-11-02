@@ -28,3 +28,17 @@ on t1.plan_id=t2.plan_id
 where TO_CHAR(start_date, 'yyyy') > '2020'
 group by  plan_name
 ;
+
+-- 4. What is the customer count and percentage of customers who have churned rounded to 1 decimal place?
+
+select
+count(distinct customer_id) as total_customers,
+count(case 
+      when 
+      plan_id = 4 then 1 else null end)::decimal as churned_customers,
+round(count(case 
+      when 
+      plan_id = 4 then 1 else null end)::decimal / count(distinct customer_id) * 100,1) as churn_percentage
+from
+foodie_fi.subscriptions
+
