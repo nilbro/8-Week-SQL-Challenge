@@ -42,3 +42,24 @@ round(count(case
 from
 foodie_fi.subscriptions
 
+-- 5. How many customers have churned straight after their initial free trial - what percentage is this rounded to the nearest whole number?
+
+with cte as (select
+*,            
+LAG(start_date,1) over(partition by customer_id) as churn_date
+from
+foodie_fi.subscriptions
+where plan_id = 0 or plan_id = 4
+            )
+
+select
+round(count(case
+      when extract(day from start_date::timestamp - churn_date::timestamp) = 7
+     then 1 else NULL end)::decimal / count(distinct customer_id) *100) as churned_after_trial_percentage
+from cte
+
+
+
+
+
+
