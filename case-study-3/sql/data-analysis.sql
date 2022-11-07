@@ -130,6 +130,34 @@ group by plan_id)t3)t4
 join foodie_fi.plans t5
 on t4.plan_id = t5.plan_id
 
+-- 8. How many customers have upgraded to an annual plan in 2020?
+
+
+with cte as (select
+switched_plan,
+count(customer_id) as upgraded_customers
+from
+(select 
+customer_id,
+plan_id as initial_plan,
+lead(plan_id,1) over (partition by customer_id) as switched_plan,
+lead(start_date,1) over (partition by customer_id) as switched_date
+from foodie_fi.subscriptions)t1
+where switched_date > '2019-12-31' :: date and
+ switched_date <= '2020-12-31' :: date
+group by switched_plan)
+
+select 
+plan_name,
+upgraded_customers
+from cte a
+join
+foodie_fi.plans b
+on b.plan_id = a.switched_plan
+where plan_name = 'pro annual'
+
+-- 9. How many days on average does it take for a customer to an annual plan from the day they join Foodie-Fi?
+
 
 
 
