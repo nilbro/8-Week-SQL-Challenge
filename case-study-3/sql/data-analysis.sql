@@ -59,6 +59,77 @@ round(count(case
 from cte
 
 
+-- 6. What is the number and percentage of customer plans after their initial free trial?
+
+
+
+SELECT plan_name, COUNT(plan_name) AS number_of_plans_after_trial,
+ROUND(
+    (
+      COUNT(plan_name) / (
+        SELECT
+          COUNT(distinct customer_id)
+        FROM
+          foodie_fi.subscriptions
+      ) ::numeric * 100
+    ), 1
+  ) AS percentage_of_total_customers
+FROM
+  (SELECT
+      s.customer_id,
+      trial_ended,
+      plan_name
+    FROM
+      foodie_fi.subscriptions AS s
+      JOIN foodie_fi.plans AS p ON s.plan_id = p.plan_id
+      JOIN (
+        SELECT
+          customer_id,
+          (start_date + interval '7' day) AS trial_ended
+        FROM
+          foodie_fi.subscriptions
+        WHERE
+          plan_id = 0
+      ) AS t ON s.customer_id = t.customer_id
+ WHERE
+start_date = trial_ended
+    GROUP BY
+      start_date,
+      s.customer_id,
+      trial_ended,
+      plan_name) AS count_plans
+      GROUP BY plan_name;
+
+-- 7. What is the customer count and percentage breakdown of all 5 plan_name values at 2020-12-31?
+
+select 
+plan_name,
+customer_count,
+customer_percentage
+from
+(select 
+plan_id,
+customer_count,
+round(customer_count * 100 / sum(customer_count) over () , 2) as customer_percentage
+from
+(select 
+plan_id,
+count(customer_id) as customer_count
+from
+(select 
+customer_id,
+plan_id
+from
+(select 
+*,
+lead(start_date,1) over (partition by customer_id) as end_date
+from foodie_fi.subscriptions
+where start_date <= '2020-12-31' :: date)t1
+where end_date is NULL)t2
+group by plan_id)t3)t4
+join foodie_fi.plans t5
+on t4.plan_id = t5.plan_id
+
 
 
 
